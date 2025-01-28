@@ -1,0 +1,104 @@
+import tkinter as tk
+from tkinter import ttk, messagebox
+
+
+class BudgetCalculatorApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Budget Calculator")
+        self.root.geometry("1920x1080")
+        self.root.config(bg="#1E1E2F")
+
+        self.budget = tk.DoubleVar(value=0)
+        self.expenses = []
+        self.total_expenses = tk.DoubleVar(value=0)
+
+        self.create_ui()
+
+    def create_ui(self):
+
+        title = tk.Label(self.root, text="Budget Calculator", font=("Arial", 20, "bold"), fg="white", bg="#1E1E2F")
+        title.pack(pady=10)
+
+        budget_frame = tk.Frame(self.root, bg="#252540", pady=10, padx=10)
+        budget_frame.pack(pady=10)
+
+        tk.Label(budget_frame, text="Set Budget:", font=("Arial", 14), fg="white", bg="#252540").grid(row=0, column=0, sticky="w")
+        self.budget_entry = tk.Entry(budget_frame, textvariable=self.budget, font=("Arial", 14), width=10)
+        self.budget_entry.grid(row=0, column=1, padx=10)
+        set_budget_button = tk.Button(budget_frame, text="Set", command=self.set_budget, bg="#6C63FF", fg="white", font=("Arial", 12), padx=10, pady=5)
+        set_budget_button.grid(row=0, column=2, padx=10)
+
+       
+        self.progress_label = tk.Label(self.root, text="Budget Remaining: $0", font=("Arial", 14), fg="white", bg="#1E1E2F")
+        self.progress_label.pack(pady=10)
+        self.progress_bar = ttk.Progressbar(self.root, maximum=100, value=0)
+        self.progress_bar.pack(pady=10, padx=20, fill="x")
+
+        expense_frame = tk.Frame(self.root, bg="#252540", pady=10, padx=10)
+        expense_frame.pack(pady=10)
+
+        tk.Label(expense_frame, text="Expense Name:", font=("Arial", 14), fg="white", bg="#252540").grid(row=0, column=0, sticky="w")
+        self.expense_name_entry = tk.Entry(expense_frame, font=("Arial", 14), width=15)
+        self.expense_name_entry.grid(row=0, column=1, padx=10)
+
+        tk.Label(expense_frame, text="Amount:", font=("Arial", 14), fg="white", bg="#252540").grid(row=1, column=0, sticky="w")
+        self.expense_amount_entry = tk.Entry(expense_frame, font=("Arial", 14), width=15)
+        self.expense_amount_entry.grid(row=1, column=1, padx=10)
+
+        add_expense_button = tk.Button(expense_frame, text="Add Expense", command=self.add_expense, bg="#6C63FF", fg="white", font=("Arial", 12), padx=10, pady=5)
+        add_expense_button.grid(row=2, column=0, columnspan=2, pady=10)
+
+        
+        self.expense_listbox = tk.Listbox(self.root, font=("Arial", 12), width=40, height=10)
+        self.expense_listbox.pack(pady=10)
+
+        delete_expense_button = tk.Button(self.root, text="Delete Selected", command=self.delete_expense, bg="#FF595E", fg="white", font=("Arial", 12), padx=10, pady=5)
+        delete_expense_button.pack(pady=10)
+
+    def set_budget(self):
+        try:
+            budget = self.budget.get()
+            self.update_progress()
+            self.progress_label.config(text=f"Budget Remaining: ${budget - self.total_expenses.get():.2f}")
+        except ValueError:
+            messagebox.showerror("Erreeer", "Invalid budget amount!")
+
+    def add_expense(self):
+        try:
+            name = self.expense_name_entry.get()
+            amount = float(self.expense_amount_entry.get())
+            if name and amount > 0:
+                self.expenses.append({"name": name, "amount": amount})
+                self.total_expenses.set(self.total_expenses.get() + amount)
+                self.expense_listbox.insert(tk.END, f"{name} - ${amount:.2f}")
+                self.update_progress()
+                self.expense_name_entry.delete(0, tk.END)
+                self.expense_amount_entry.delete(0, tk.END)
+            else:
+                messagebox.showerror("Erreeer", "Please enter valid expense details!")
+        except ValueError:
+            messagebox.showerror("Erreeer", "Invalid expense amount!")
+
+    def delete_expense(self):
+        try:
+            selected_index = self.expense_listbox.curselection()[0]
+            selected_expense = self.expenses.pop(selected_index)
+            self.total_expenses.set(self.total_expenses.get() - selected_expense["amount"])
+            self.expense_listbox.delete(selected_index)
+            self.update_progress()
+        except IndexError:
+            messagebox.showerror("Erreeer", "No expens selected!")
+
+    def update_progress(self):
+        remaining_budget = self.budget.get() - self.total_expenses.get()
+        self.progress_label.config(text=f"Budget Remaining: ${remaining_budget:.2f}")
+        progress = (self.total_expenses.get() / self.budget.get()) * 100 if self.budget.get() > 0 else 0
+        self.progress_bar['value'] = progress if progress <= 100 else 100
+
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = BudgetCalculatorApp(root)
+    root.mainloop()
